@@ -1,0 +1,65 @@
+*{
+	margin: 0;
+	padding: 0;
+	box-sizing: inherit;
+}
+
+html{
+	font-size: 10px;
+}
+
+body {
+	background-color: #ffffff;
+	box-sizing: border-box;
+	overflow: hidden;
+	font-family: Monospace;
+}
+
+.header{
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate( -50% , -50% );
+	color: #fff;
+	text-align: center;
+	backface-visibility: hidden;
+	pointer-events: none;
+}
+
+.header--main{
+	display: block;
+	font-size: 13.0rem;
+	font-weight: 700;
+	text-shadow: 0.3rem 0.3rem 0.3rem #666;
+	animation: fade-in 2.0s linear 2s;
+	animation-fill-mode: backwards;
+}
+
+.header--sub{
+	display: block;
+	font-size: 4.0rem;
+	letter-spacing: 1.0rem;
+	font-weight: 700;
+	text-shadow: 0.3rem 0.3rem 0.3rem #666;
+	animation: fade-in 2.0s linear 4s;
+	animation-fill-mode: backwards;
+}
+
+.header--smiley{
+	display: block;
+	font-size: 4.0rem;
+	font-weight: 700;
+	margin-top: 20px;
+	text-shadow: 0.3rem 0.3rem 0.3rem #666;
+	animation: fade-in 1.0s linear 7s;
+	animation-fill-mode: backwards;
+}
+
+@keyframes fade-in{
+	0%{
+		opacity: 0.0;
+	}
+	100%{
+		opacity: 1.0;
+	}
+}
