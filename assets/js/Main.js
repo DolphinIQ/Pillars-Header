@@ -34,9 +34,9 @@ function init() {
 	
 	// Camera
 	camera0 = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1.0, 100 );
-	// camera0.position.set( -8 , 13 , 15 );
-	// camera0.position.set( -8.5 , 13.7 , -14 );
-	camera0.position.set( 29 , 17 , -16 );
+	// camera0.position.set( 29 , 17 , -16 );
+	camera0.position.set( 25 , 17 , -18 );
+	camera0.lookAt( new THREE.Vector3( -5 , 0 , -2 ) );
 	
 	// Clock
 	clock = new THREE.Clock();
@@ -141,14 +141,14 @@ let createStartingMesh = function(){
 		// 2x8x2
 		let pillarGeo = gltf.scene.children[0].geometry;
 		
-		const instancesPerRow = 40, // 50
+		const instancesPerRow = 50, // 50
 			instanceGrid = new THREE.Vector2( instancesPerRow , instancesPerRow ),
 			gridSize = new THREE.Vector2( 2.0 , 2.0 ),
 			extra = 0.1; // 4
 		let x , y , z, w;
-		let offsetArr = [];
-		let timeOffsetArr = [];
-		let amplitudeArr = [];
+		let offsetArr = [],
+			timeOffsetArr = [],
+			amplitudeArr = [];
 		for( let i = 0; i < instanceGrid.x; i++ ){
 			for( let j = 0; j < instanceGrid.y; j++ ){
 				x = i * gridSize.x - instanceGrid.x * gridSize.x / 2; // -50 : 50
@@ -162,9 +162,9 @@ let createStartingMesh = function(){
 				
 				// x = Math.random() * 6.28;
 				w = Math.abs( perlin.noise( 
-					x / instancesPerRow , 
+					x / 50 , 
 					0.0,
-					z / instancesPerRow
+					z / 50
 				) ) * 2.0;
 				amplitudeArr.push( (w+extra)* 20.0  );
 			}
@@ -256,7 +256,7 @@ let createStartingMesh = function(){
 }
 
 let initControls = function(){
-	controls = new THREE.OrbitControls( camera0 , canvas );
+	// controls = new THREE.OrbitControls( camera0 , canvas );
 	
 	window.addEventListener( 'keydown', function(evt){
 		if( evt.key === "l" ){
@@ -296,7 +296,6 @@ let initPostProcessing = function(){
 	bloomPassFolder.add( unrealBloomPass , 'radius' , 0.0 , 1.0 , 0.001 );
 	bloomPassFolder.add( unrealBloomPass , 'threshold' , 0.0 , 1.0 , 0.001 );
 	bloomPassFolder.add( unrealBloomPass , 'enabled' );
-	gui.add( fxaaPass , "enabled" ).name("FXAAPass");
 	
 	// CUSTOM DEPTH MATERIAL FOR BOKEH
 	let customDepthMaterial = new THREE.MeshDepthMaterial();
@@ -306,36 +305,28 @@ let initPostProcessing = function(){
 	
 	let multiplier = 0.0001;
 	bokehPass = new THREE.BokehPass( scene0, camera0, {
-		focus: 150.0, // 80.0
-		aperture: 5.0 * multiplier, // 20.0 * multiplier
+		focus: 74.0, // 80.0
+		aperture: 40.0 * multiplier, // 20.0 * multiplier
 		maxblur: 1.0,
 		width: window.innerWidth,
 		height: window.innerHeight
 	}, pillarsCustomDepthMat );
-	bokehPass.controlAperture = 20;
+	bokehPass.controlAperture = 40;
 	// bokehPass.enabled = false;
 	
 	let bokehPassFolder = gui.addFolder( "Bokeh Pass" );
 	bokehPassFolder.open();
 	bokehPassFolder.add( bokehPass.uniforms.focus, "value", 1.0, 500.0, 0.1 ).name("focus");
-	bokehPassFolder.add( bokehPass, "controlAperture", 0.0, 100.0, 0.01 ).name("aperture").onChange( function(val){
+	bokehPassFolder.add( bokehPass, "controlAperture", 0.0, 200.0, 0.01 ).name("aperture").onChange( function(val){
 		bokehPass.uniforms.aperture.value = val * multiplier;
 	});
 	bokehPassFolder.add( bokehPass.uniforms.maxblur, "value", 0.0, 3.0, 0.025 ).name("maxblur");
 	bokehPassFolder.add( bokehPass , 'enabled' );
 	console.log( bokehPass );
 	
-	let vblurPass = new THREE.ShaderPass( THREE.VerticalBlurShader );
-	let hblurPass = new THREE.ShaderPass( THREE.HorizontalBlurShader );
-	
 	composer.addPass( renderPass );
 	composer.addPass( unrealBloomPass );
-	// composer.addPass( vblurPass );
-	// composer.addPass( hblurPass );
-	// composer.addPass( vblurPass );
-	// composer.addPass( hblurPass );
 	composer.addPass( bokehPass );
-	// composer.addPass( fxaaPass );
 }
 
 let initLights = function(){
