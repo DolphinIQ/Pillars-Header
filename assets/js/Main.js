@@ -4,50 +4,40 @@ THREE.js r106
 
 // Global Variables
 let canvas = document.getElementById("myCanvas");
-let camera0, scene0, renderer, composer, controls, clock, time=0.0, stats, gui;
+let camera, scene, renderer, composer, clock, time=0.0, stats, gui;
+let controls, 
+	camPos = new THREE.Vector3( 25 , 17 , -18 ),
+	mousePos = new THREE.Vector2( 0.5 , 0.5 );
 let textureLoader, gltfLoader;
-let Textures = {};
 let Lights = [];
-let shadows = false;
-let bokehPass, fxaaPass, unrealBloomPass, renderPass;
+let bokehPass, unrealBloomPass, renderPass;
 let pillars , pillarsCustomDepthMat , pillarShader = {} , pillarDepthShader = {};
 let perlin;
+
 const lightPos = new THREE.Vector3( -20 , 20 , 20 );
 
 function init() {
 	// Renderer
 	renderer = new THREE.WebGLRenderer( { canvas: canvas, antialias: true, powerPreference: "high-performance" } );
 	renderer.setSize( window.innerWidth, window.innerHeight );
-	if(shadows){ 
-		renderer.shadowMap.enabled = true;
-		renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-		// renderer.shadowMap.type = THREE.VSMShadowMap;
-		renderer.shadowMap.autoUpdate = false;
-	}
-	// renderer.gammaOutput = true;
-	// renderer.gammaFactor = 2.2;
 	renderer.physicallyCorrectLights = true;
 	
 	// Scene
-	scene0 = new THREE.Scene();
-	scene0.background = new THREE.Color( 0x000000 );
+	scene = new THREE.Scene();
+	scene.background = new THREE.Color( 0x000000 );
 	
 	// Camera
-	camera0 = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1.0, 100 );
-	// camera0.position.set( 29 , 17 , -16 );
-	camera0.position.set( 25 , 17 , -18 );
-	camera0.lookAt( new THREE.Vector3( -5 , 0 , -2 ) );
+	camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1.0, 100 );
+	camera.position.copy( camPos );
+	camera.lookAt( new THREE.Vector3( -5 , 0 , -2 ) );
 	
 	// Clock
 	clock = new THREE.Clock();
 	
-	//Stats
+	//Stats & GUI
 	stats = new Stats();
 	document.body.appendChild( stats.dom );
-	
-	//GUI
 	gui = new dat.GUI();
-	// gui.add(object, property, [min], [max], [step])
 	
 	// Noise
 	perlin = new THREE.ImprovedNoise();
@@ -59,31 +49,14 @@ function init() {
 	// Resize Event
 	window.addEventListener("resize", function(){
 		renderer.setSize( window.innerWidth, window.innerHeight );
-		camera0.aspect = window.innerWidth / window.innerHeight;
-		camera0.updateProjectionMatrix();
+		camera.aspect = window.innerWidth / window.innerHeight;
+		camera.updateProjectionMatrix();
 	}, false);
 	
 	// Inits
-	initControls();
-	initTextures();
-	
 	initLights();
 	createStartingMesh();
 	initPostProcessing();
-	
-	if( shadows ) renderer.shadowMap.needsUpdate = true;
-	
-	setInterval( function(  ){
-		console.log( renderer.info.render.calls );
-	}, 1000/2 );
-}
-
-let randomGridPos = function( grid , distanceUnit , origin ){
-	let x , y , z;
-}
-
-Math.fract = function( x ){
-	return x - Math.floor(x);
 }
 
 let createStartingMesh = function(){
@@ -99,7 +72,6 @@ let createStartingMesh = function(){
 	pillarsCustomDepthMat = new THREE.MeshDepthMaterial({
 		// depthPacking: THREE.RGBADepthPacking,
 		blending: THREE.NoBlending,
-		// alphaTest: 0.5
 	});
 	pillarsCustomDepthMat.onBeforeCompile = function( shader ){
 		
@@ -134,14 +106,13 @@ let createStartingMesh = function(){
 			
 		pillarDepthShader = shader;
 	};
-	// scene0.overrideMaterial = pillarsCustomDepthMat;
 	
 	gltfLoader.load( 'assets/models/pillars.glb' , function( gltf ){
 		
 		// 2x8x2
 		let pillarGeo = gltf.scene.children[0].geometry;
 		
-		const instancesPerRow = 50, // 50
+		const instancesPerRow = 40, // 50
 			instanceGrid = new THREE.Vector2( instancesPerRow , instancesPerRow ),
 			gridSize = new THREE.Vector2( 2.0 , 2.0 ),
 			extra = 0.1; // 4
@@ -152,7 +123,6 @@ let createStartingMesh = function(){
 		for( let i = 0; i < instanceGrid.x; i++ ){
 			for( let j = 0; j < instanceGrid.y; j++ ){
 				x = i * gridSize.x - instanceGrid.x * gridSize.x / 2; // -50 : 50
-				// y = Math.random() * variationHeight - Math.random() * variationHeight*0.5;
 				y = 0.0;
 				z = j * gridSize.y - instanceGrid.y * gridSize.y / 2;
 				offsetArr.push( x , y , z );
@@ -160,7 +130,6 @@ let createStartingMesh = function(){
 				w = (instancesPerRow*0.5 + 0.5*x) / instancesPerRow * 10; // 0.0 : 1.0
 				timeOffsetArr.push( w );
 				
-				// x = Math.random() * 6.28;
 				w = Math.abs( perlin.noise( 
 					x / 50 , 
 					0.0,
@@ -222,7 +191,6 @@ let createStartingMesh = function(){
 			
 			// FRAGMENT
 			s.fragmentShader = `
-				
 				varying vec3 vColor;
 			` + s.fragmentShader;
 			
@@ -232,97 +200,41 @@ let createStartingMesh = function(){
 			` );
 			
 			pillarShader = s;
-			// console.log( "pillarShader" , pillarShader );
 		}
 		
 		pillars = new THREE.Mesh( instancedGeo , pillarMat2 );
 		
-		
-		// SHADOWS
 		pillars.customDepthMaterial = pillarsCustomDepthMat;
 		
-		if( shadows ){
-			pillars.castShadow = true;
-			pillars.receiveShadow = true;
-			renderer.shadowMap.needsUpdate = true;
-		}
-		
 		pillars.frustumCulled = false;
-		
-		scene0.add( pillars );
-		// console.log( pillars );
-		
+		scene.add( pillars );
 	} );
 }
 
-let initControls = function(){
-	// controls = new THREE.OrbitControls( camera0 , canvas );
-	
-	window.addEventListener( 'keydown', function(evt){
-		if( evt.key === "l" ){
-			console.log( camera0.position );
-		}
-	}, false );
-}
-
-let initTextures = function(){
-	
-}
-
 let initPostProcessing = function(){
+	
 	composer = new THREE.EffectComposer( renderer );
 	renderer.info.autoReset = false;
 	
 	// Passes
-	renderPass = new THREE.RenderPass( scene0, camera0 );
-	fxaaPass = new THREE.ShaderPass( THREE.FXAAShader );
+	renderPass = new THREE.RenderPass( scene, camera );
 	
-	// resolution, strength, radius, threshold
 	unrealBloomPass = new THREE.UnrealBloomPass( 
-		new THREE.Vector2( 256 , 256 ),
-		1.5, 0.0 , 0.35
+		new THREE.Vector2( 256 , 256 ), // resolution
+		1.5, 0.0 , 0.35 // strength, radius, threshold
 	);
-	// unrealBloomPass.enabled = false;
 	unrealBloomPass.exposure = 1.0;
-	
-	let bloomPassFolder = gui.addFolder( "Bloom Pass" );
-	// bloomPassFolder.open();
-	bloomPassFolder.add( unrealBloomPass, 'exposure', 0.0, 2.0 , 0.1 )
-	.onChange( function ( value ) {
-		renderer.toneMappingExposure = Math.pow( value, 4.0 );
-		// renderer.toneMappingExposure = value;
-	} );
-	bloomPassFolder.add( unrealBloomPass , 'strength' , 0.0 , 10.0 , 0.005 );
-	bloomPassFolder.add( unrealBloomPass , 'radius' , 0.0 , 1.0 , 0.001 );
-	bloomPassFolder.add( unrealBloomPass , 'threshold' , 0.0 , 1.0 , 0.001 );
-	bloomPassFolder.add( unrealBloomPass , 'enabled' );
-	
-	// CUSTOM DEPTH MATERIAL FOR BOKEH
-	let customDepthMaterial = new THREE.MeshDepthMaterial();
-	customDepthMaterial.depthPacking = THREE.RGBADepthPacking;
-	customDepthMaterial.blending = THREE.NoBlending;
-	
+	Controller.addBloomControls( unrealBloomPass , false );
 	
 	let multiplier = 0.0001;
-	bokehPass = new THREE.BokehPass( scene0, camera0, {
-		focus: 74.0, // 80.0
-		aperture: 40.0 * multiplier, // 20.0 * multiplier
+	bokehPass = new THREE.BokehPass( scene, camera, {
+		focus: 74.0, // 74.0
+		aperture: 70.0 * multiplier, // 20.0 * multiplier
 		maxblur: 1.0,
 		width: window.innerWidth,
 		height: window.innerHeight
 	}, pillarsCustomDepthMat );
-	bokehPass.controlAperture = 40;
-	// bokehPass.enabled = false;
-	
-	let bokehPassFolder = gui.addFolder( "Bokeh Pass" );
-	bokehPassFolder.open();
-	bokehPassFolder.add( bokehPass.uniforms.focus, "value", 1.0, 500.0, 0.1 ).name("focus");
-	bokehPassFolder.add( bokehPass, "controlAperture", 0.0, 200.0, 0.01 ).name("aperture").onChange( function(val){
-		bokehPass.uniforms.aperture.value = val * multiplier;
-	});
-	bokehPassFolder.add( bokehPass.uniforms.maxblur, "value", 0.0, 3.0, 0.025 ).name("maxblur");
-	bokehPassFolder.add( bokehPass , 'enabled' );
-	console.log( bokehPass );
+	Controller.addBokehControls( bokehPass , multiplier , false );
 	
 	composer.addPass( renderPass );
 	composer.addPass( unrealBloomPass );
@@ -333,57 +245,21 @@ let initLights = function(){
 	Lights[0] = new THREE.AmbientLight( 0xffffff , 0.3 );
 	Lights[1] = new THREE.DirectionalLight( 0xffffff , 1.5 );
 	Lights[1].position.copy( lightPos );
-	if(shadows){
-		Lights[1].castShadow = true;
-		Lights[1].shadow.mapSize.width = 512 * 1;
-		Lights[1].shadow.mapSize.height = 512 * 1;
-		Lights[1].shadow.camera.near = 0.1;
-		Lights[1].shadow.camera.far = 100;
-		// Lights[1].shadow.radius = 8;
-		const dist = 30; // 30
-		if( Lights[1] instanceof THREE.DirectionalLight ){
-			Lights[1].shadow.camera.left = -dist;
-			Lights[1].shadow.camera.bottom = -dist;
-			Lights[1].shadow.camera.top = dist;
-			Lights[1].shadow.camera.right = dist;
-		}
-		Lights[1].shadow.bias = 0.0005;
-		
-		let shadowFolder = gui.addFolder( "Shadows" );
-		shadowFolder.open();
-		// shadowFolder.add( Lights[1].shadow , "radius" ).min(0.1).max(10.0).step(0.05);
-		shadowFolder.add( Lights[1].shadow.mapSize , "width" ).min(256).max(4096).step(256);
-		shadowFolder.add( Lights[1].shadow.mapSize , "height" ).min(256).max(4096).step(256);
-		const s = {
-			range: 80.0,
-			dist: 10,
-		};
-		shadowFolder.add( Lights[1].position , "x" ).min(-s.range).max(s.range).step(0.1);
-		shadowFolder.add( Lights[1].position , "y" ).min(-s.range).max(s.range).step(0.1);
-		shadowFolder.add( Lights[1].position , "z" ).min(-s.range).max(s.range).step(0.1);
-		
-		let helper = new THREE.CameraHelper( Lights[1].shadow.camera );
-		scene0.add( helper );
-	}
 	
 	for(let i = 0; i < Lights.length; i++){
-		scene0.add( Lights[i] );
+		scene.add( Lights[i] );
 	}
 }
 
-function animate() {
-	// stats.begin();
-	renderer.info.reset();
-	let delta = clock.getDelta();
+let animate = function(){
+	
 	time += 1/60;
 	
 	if( pillarShader.uniforms ) pillarShader.uniforms.uTime.value = time;
 	if( pillarDepthShader.uniforms ) pillarDepthShader.uniforms.uTime.value = time;
 	
-	if( shadows ) renderer.shadowMap.needsUpdate = true;
-	
 	requestAnimationFrame( animate );
-	composer.render( scene0, camera0 );
+	composer.render( scene, camera );
 	stats.update();
 }
 
