@@ -28,7 +28,8 @@ body {
 
 .header--main{
 	display: block;
-	font-size: 13.0rem;
+	font-size: 16.0rem;
+	letter-spacing: 2.0rem;
 	font-weight: 700;
 	text-shadow: 0.3rem 0.3rem 0.3rem #666;
 	animation: fade-in 2.0s linear 2s;
@@ -38,8 +39,9 @@ body {
 .header--sub{
 	display: block;
 	font-size: 4.0rem;
-	letter-spacing: 1.0rem;
+	letter-spacing: 1.5rem;
 	font-weight: 700;
+	margin: 0 0 20px;
 	text-shadow: 0.3rem 0.3rem 0.3rem #666;
 	animation: fade-in 2.0s linear 4s;
 	animation-fill-mode: backwards;
@@ -49,7 +51,6 @@ body {
 	display: block;
 	font-size: 4.0rem;
 	font-weight: 700;
-	margin-top: 20px;
 	text-shadow: 0.3rem 0.3rem 0.3rem #666;
 	animation: fade-in 1.0s linear 7s;
 	animation-fill-mode: backwards;

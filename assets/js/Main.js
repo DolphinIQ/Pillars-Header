@@ -57,17 +57,12 @@ function init() {
 	initLights();
 	createStartingMesh();
 	initPostProcessing();
+	gui.close();
 }
 
 let createStartingMesh = function(){
 	
-	let boxGeometry = new THREE.BufferGeometry();
-	let pos = new Float32Array([
-		-1, 1, -1,  
-	]);
-	
 	const timeFactor = 1.0; // 0.05
-	
 	
 	pillarsCustomDepthMat = new THREE.MeshDepthMaterial({
 		// depthPacking: THREE.RGBADepthPacking,
