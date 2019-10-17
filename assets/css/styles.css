@@ -5,7 +5,31 @@
 }
 
 html{
-	font-size: 10px;
+	font-size: 62.5%; /* 10px */
+}
+
+@media( max-width: 900px ){
+	html{
+		font-size: 37.5%;
+	}
+}
+
+@media( max-width: 500px ){
+	html{
+		font-size: 18.75%;
+	}
+}
+
+@media( min-width: 1900px ){
+	html{
+		font-size: 100%;
+	}
+}
+
+@media( min-width: 2500px ){
+	html{
+		font-size: 137.5%;
+	}
 }
 
 body {
@@ -38,7 +62,7 @@ body {
 
 .header--sub{
 	display: block;
-	font-size: 4.0rem;
+	font-size: 5.0rem;
 	letter-spacing: 1.5rem;
 	font-weight: 700;
 	margin: 0 0 20px;
@@ -49,7 +73,7 @@ body {
 
 .header--smiley{
 	display: block;
-	font-size: 4.0rem;
+	font-size: 5.0rem;
 	font-weight: 700;
 	text-shadow: 0.3rem 0.3rem 0.3rem #666;
 	animation: fade-in 1.0s linear 7s;
